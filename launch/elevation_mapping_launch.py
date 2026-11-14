@@ -9,14 +9,18 @@ def generate_launch_description():
         output = 'screen'
     )
 
-    static_tf = Node(
-        package = 'tf2_ros',
-        executable = 'static_transform_publisher',
-        name = 'lidar_static_tf',
-        arguments = ['--x', '0', '--y', '0', '--z', '0.5', # change the offset from robot to lidar frame
-               '--roll', '0', '--pitch', '0.2', '--yaw', '0',
-               '--frame-id', 'map',
-               '--child-frame-id', 'rslidar'] 
+    # robot pose comes from FAST-LIO2 (run separately), which publishes tf camera_init -> body
+    # names below are FAST-LIO2 defaults, check with: ros2 topic list / ros2 run tf2_tools view_frames
+    elevation_map = Node(
+        package = 'mapping',
+        executable = 'elevation_map_node',
+        name = 'elevation_mapping_node',
+        output = 'screen',
+        parameters = [{
+            'map_frame': 'camera_init',          # FAST-LIO2 world frame (pose at start-up)
+            'base_frame': 'body',                # FAST-LIO2 moving frame (lidar imu)
+            'cloud_topic': '/cloud_registered',  # FAST-LIO2 scan already in camera_init frame. for patchwork++ use its ground topic instead
+        }]
     )
 
     rviz = Node(
@@ -26,7 +30,7 @@ def generate_launch_description():
         output = 'screen'
     )
 
-    return LaunchDescription([rslidar, static_tf, rviz])
+    return LaunchDescription([rslidar, elevation_map, rviz])
 
 
 
