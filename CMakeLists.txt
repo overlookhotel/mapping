@@ -37,7 +37,7 @@ ament_target_dependencies(elevation_map_node
 install(TARGETS elevation_map_node
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch config rviz
+install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()
