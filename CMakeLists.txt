@@ -34,7 +34,11 @@ add_executable(elevation_map_node src/elevation_map_node.cpp)
 ament_target_dependencies(elevation_map_node
   rclcpp sensor_msgs tf2_ros tf2_sensor_msgs grid_map_ros grid_map_msgs)
 
-install(TARGETS elevation_map_node
+add_executable(elevation_map_raw_test src/elevation_map_raw_test.cpp)
+ament_target_dependencies(elevation_map_raw_test
+  rclcpp sensor_msgs tf2_ros tf2_sensor_msgs grid_map_ros grid_map_msgs)
+
+install(TARGETS elevation_map_node elevation_map_raw_test
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch config rviz

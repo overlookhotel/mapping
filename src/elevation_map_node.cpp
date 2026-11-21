@@ -30,7 +30,7 @@ class ElevationMappingNode : public rclcpp::Node
     {
         // parameters
         map_frame_       = this->declare_parameter<std::string>("map_frame", "map");                    // frame of the map, name must exist in tf tree (check using: ros2 run tf2_tools view_frames)
-        cloud_topic_     = this->declare_parameter<std::string>("cloud_topic", "/rslidar_points");  //  "/patchwork/ground_cloud"
+        cloud_topic_     = this->declare_parameter<std::string>("cloud_topic", "/patchwork/ground_cloud"); 
         length_x_        = this->declare_parameter<double>("length_x", 30.0);                           // length in x direction of the map [m]
         length_y_        = this->declare_parameter<double>("length_y", 30.0);                           // length in y direction of the map [m]
         resolution_      = this->declare_parameter<double>("resolution", 0.3);                          // resolution of map, in length of grid size [m]
