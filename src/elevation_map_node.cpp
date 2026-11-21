@@ -30,7 +30,7 @@ class ElevationMappingNode : public rclcpp::Node
     {
         // parameters
         map_frame_       = this->declare_parameter<std::string>("map_frame", "map");                    // frame of the map, name must exist in tf tree (check using: ros2 run tf2_tools view_frames)
-        cloud_topic_     = this->declare_parameter<std::string>("cloud_topic", "/patchwork/ground_cloud"); 
+        cloud_topic_     = this->declare_parameter<std::string>("cloud_topic", "/rslidar_points");  //  "/patchwork/ground_cloud"
         length_x_        = this->declare_parameter<double>("length_x", 30.0);                           // length in x direction of the map [m]
         length_y_        = this->declare_parameter<double>("length_y", 30.0);                           // length in y direction of the map [m]
         resolution_      = this->declare_parameter<double>("resolution", 0.3);                          // resolution of map, in length of grid size [m]
@@ -38,6 +38,7 @@ class ElevationMappingNode : public rclcpp::Node
         reset_each_scan_ = this->declare_parameter<bool>("reset_each_scan", false);                     // to reset the map after each lidar scan
         centre_x_ = this->declare_parameter<double>("centre_x", 0.0);                                   // map centre x in map_frame [m]
         centre_y_ = this->declare_parameter<double>("centre_y", 0.0);                                   // map centre y in map_frame [m]
+        base_frame_ = this->declare_parameter<std::string>("base_frame", "base_link");                  // rover body frame, map follows this frame
             
 
         // map set up
@@ -86,7 +87,19 @@ class ElevationMappingNode : public rclcpp::Node
             clearMap();
             }
 
-            map_.setPosition(grid_map::Position(centre_x_, centre_y_)); // map centred frame and move robot within the frame
+            // get rover position in map frame
+            double rover_x, rover_y;
+            try {
+                auto base_tf = tf_buffer_.lookupTransform(
+                map_frame_, base_frame_, tf2::TimePointZero);
+                rover_x = base_tf.transform.translation.x;
+                rover_y = base_tf.transform.translation.y;
+            } catch (const tf2::TransformException & e) {
+                RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "%s", e.what());
+                return;
+            }
+
+            map_.move(grid_map::Position(rover_x, rover_y));  // keep map centred on rover; move() shifts stored data, setPosition() does not
 
         
             // insert every point into the grid
@@ -95,6 +108,8 @@ class ElevationMappingNode : public rclcpp::Node
                 if (!std::isfinite(*ix) || !std::isfinite(*iy) || !std::isfinite(*iz)) {
                     continue;
                 }
+
+                if (*iz < min_z_ || *iz > max_z_) continue;
             
                 grid_map::Index idx; // point is outside the map
                 if (!map_.getIndex(grid_map::Position(*ix, *iy), idx)) {
